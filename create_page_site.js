@@ -3,7 +3,7 @@ const htmlToText = require('html-to-text');
 const fs = require('fs');
 const path = require('path');
 const config = require('dotenv').config();
-const timeout = 10000;
+const timeout = 5000;
 
 var createGooglePage = async function(pageSlug, pageTitle, pageType, mode) {
     let browser;
@@ -32,15 +32,19 @@ var createGooglePage = async function(pageSlug, pageTitle, pageType, mode) {
         let gotoCreatePage;
         
         console.log('Go to google site')
-        if ( !mode ) {
-            gotoCreatePage = `https://sites.google.com/site/paylesscouponssite/system/app/pages/createPage?source=/home/${pageType}`
+        if ( !mode || (mode && mode == 'create')) {
+            if ( pageType == 'store' ) {
+                gotoCreatePage = process.env.GOOGLE_CREATE_STORE;
+            }
+            if ( pageType == 'category' ) {
+                gotoCreatePage = process.env.GOOGLE_CREATE_CATEGORY;
+            }
         } else {
             gotoCreatePage = 'https://sites.google.com/site/?usp=sites_home'
         }
         await page.goto(gotoCreatePage)
 
         await navigationPromise
-        await page.screenshot({path: 'example.png'});
         // Type to email input
         await page.waitForSelector('input[type="email"]')
         await page.type('input[type="email"]', process.env.GOOGLE_USER)
@@ -53,7 +57,8 @@ var createGooglePage = async function(pageSlug, pageTitle, pageType, mode) {
         await page.click('#passwordNext')
 
         await navigationPromise
-        if ( !mode ) {
+        if ( !mode || (mode && mode == 'create')) {
+            delay(timeout)
             console.log('Create new subpage')
             await page.waitForSelector('input[id="jot-ui-pageName"]', { visible: true})
             await page.type('input[id="jot-ui-pageName"]', pageTitle)
@@ -61,11 +66,18 @@ var createGooglePage = async function(pageSlug, pageTitle, pageType, mode) {
             await page.click('#createPageButton')
         } else {
             console.log('Go to page update')
-            delay(10000)
+            delay(timeout)
             await page.waitForSelector('.goog-ws-dash-main')
-            let gotoUpdatePage = `https://sites.google.com/site/paylesscouponssite/home/${pageType}/${pageSlug}`
+            let type = ''
+            if ( pageType == 'category' ) {
+                type = 'categories'
+            } 
+            if ( pageType == 'store' ) {
+                type = 'stores';
+            }
+            let gotoUpdatePage = `https://sites.google.com/site/foryacoupon/${type}/${pageSlug}`
             await page.goto(gotoUpdatePage)
-            delay(10000)
+            delay(timeout)
             const editButton = await page.$x('//*[@id="sites-collaborator-bar-edit-page-icon"]')
             if ( editButton.length > 0 ) {
                 editButton[0].click()
@@ -74,6 +86,7 @@ var createGooglePage = async function(pageSlug, pageTitle, pageType, mode) {
         // Create sub-page
         console.log('Show HTML code')
         await delay(timeout)
+        await page.screenshot({path: 'wait-for-toolbar.png'});
         await page.waitForSelector('.jot-editorToolbar')
         const showCodeButton = await page.$x('//*[@id=":258m"]')
         if ( showCodeButton.length > 0 ) {
@@ -102,7 +115,17 @@ var createGooglePage = async function(pageSlug, pageTitle, pageType, mode) {
         if ( updateHtmBtn.length > 0 ) {
             await updateHtmBtn[0].click()
         }
+        console.log('Wait for dialog')
         await delay(timeout)
+        try {
+            const popupBtn = await page.$x('//*[@id=":n.okBtn"]');
+            if ( popupBtn.length > 0 ) {
+                await popupBtn[0].click();
+            }
+        } catch ( error ) {
+
+        }
+        await delay(10000);
         console.log('Save site content')
         const saveAll = await page.$x('//*[@id="sites-editor-button-sites-save"]');
         if ( saveAll.length > 0 ) {
@@ -139,14 +162,12 @@ var createGooglePage = async function(pageSlug, pageTitle, pageType, mode) {
                 }
             }
         }
-        await delay(10000)
+        // await delay(timeout)
         console.log('Write to log success file')
         let successFile = `success_${pageType}.log`
         writeToLog(successFile, pageSlug)
         await browser.close()
-        if ( mode && mode == 'update' ) {
-            process.exit()
-        }
+        await delay(timeout);
     } catch (exception) {
         if (browser) {
             await browser.close();
