@@ -47,7 +47,7 @@ conn.connect( (err) => {
             console.log(`${i}> ${params.page_type}:  ${result.slug} ==> ${exists}`)
             if ( !mode && exists) {
                 mode = 'update'
-               continue;
+            //    continue;
             }
             await createPage.createGooglePage(result.slug, result.title, params.page_type, mode);
         }

@@ -86,7 +86,7 @@ var createGooglePage = async function(pageSlug, pageTitle, pageType, mode) {
         // Create sub-page
         console.log('Show HTML code')
         await delay(timeout)
-        await page.screenshot({path: 'wait-for-toolbar.png'});
+        // await page.screenshot({path: 'wait-for-toolbar.png'});
         await page.waitForSelector('.jot-editorToolbar')
         const showCodeButton = await page.$x('//*[@id=":258m"]')
         if ( showCodeButton.length > 0 ) {
@@ -132,7 +132,7 @@ var createGooglePage = async function(pageSlug, pageTitle, pageType, mode) {
             await saveAll[0].click();
         }
 
-        if ( !mode ) {
+        if ( !mode && 1 == 2) {
             // Change sub-page setting 
             console.log('Change page setting')
             await delay(timeout)
