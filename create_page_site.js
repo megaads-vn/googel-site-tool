@@ -3,13 +3,13 @@ const htmlToText = require('html-to-text');
 const fs = require('fs');
 const path = require('path');
 const config = require('dotenv').config();
-const timeout = 5000;
+const timeout = 20000;
 
 var createGooglePage = async function(pageSlug, pageTitle, pageType, mode) {
     let browser;
     let page;
     try {
-        browser = await puppeteer.launch({headless: true});
+        browser = await puppeteer.launch({headless: false});
         page = await browser.newPage();
         let htmlService = process.env.APP_SERVICE_CATEGORY_HTML + '' + pageSlug;
         if ( pageType == 'store' ) {
@@ -125,7 +125,7 @@ var createGooglePage = async function(pageSlug, pageTitle, pageType, mode) {
         } catch ( error ) {
 
         }
-        await delay(10000);
+        await delay(timeout);
         console.log('Save site content')
         const saveAll = await page.$x('//*[@id="sites-editor-button-sites-save"]');
         if ( saveAll.length > 0 ) {
@@ -162,7 +162,7 @@ var createGooglePage = async function(pageSlug, pageTitle, pageType, mode) {
                 }
             }
         }
-        // await delay(timeout)
+        await delay(timeout)
         console.log('Write to log success file')
         let successFile = `success_${pageType}.log`
         writeToLog(successFile, pageSlug)
